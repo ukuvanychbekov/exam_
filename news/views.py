@@ -27,12 +27,12 @@ class NewsListCreateAPIview(ListCreateAPIView):
     def get_queryset(self):
         return self.queryset.all()
 
+
 class NewsRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     queryset = News.objects.all()
-    serializer_class = CommentSerializer
+    serializer_class = NewsSerializer
     authentication_classes = [SessionAuthentication, TokenAuthentication, ]
     permission_classes = [IsAuthorPermission, ]
-
 
 
 class CommentListCreateAPIView(ListCreateAPIView):
@@ -64,27 +64,25 @@ class StatusViewSet(ListCreateAPIView):
     permission_classes = (IsAdminPermission,)
     authentication_classes = (TokenAuthentication, SessionAuthentication)
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user.author)
-
-    def get_queryset(self):
-        return self.queryset.all()
 
 class StatusRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
     queryset = Status.objects.all()
-    serializer_class = CommentSerializer
+    serializer_class = StatusSerializer
     authentication_classes = [SessionAuthentication, TokenAuthentication, ]
     permission_classes = [IsAdminPermission, ]
 
 
 class PostNewsLike(APIView):
+    authentication_classes = [SessionAuthentication, TokenAuthentication, ]
+    permission_classes = [IsAuthenticated, ]
+
     def get(self, request, news_id, status_slug):
         news = get_object_or_404(News, id=news_id)
-        news_status = get_object_or_404(NewsStatus, slug=status_slug)
+        news_status = get_object_or_404(Status, slug=status_slug)
         try:
-            like_dislike = LikeDislikeNews.objects.create(news=news, author=request.user.author, status=news_status)
+            like_dislike = NewsStatus.objects.create(news=news, author=request.user.author, status=news_status)
         except IntegrityError:
-            like_dislike = LikeDislikeNews.objects.get(news=news, author=request.user.autho)
+            like_dislike = NewsStatus.objects.get(news=news, author=request.user.author)
             if like_dislike.status == news_status:
                 like_dislike.status = None
             else:
@@ -96,14 +94,18 @@ class PostNewsLike(APIView):
             data = {"message": "Status added"}
             return Response(data, status=status.HTTP_201_CREATED)
 
+
 class PostCommentLike(APIView):
+    authentication_classes = [SessionAuthentication, TokenAuthentication, ]
+    permission_classes = [IsAuthenticated, ]
+
     def get(self, request, news_id, comment_id, status_slug):
         comment = get_object_or_404(Comment, id=comment_id)
-        comment_status = get_object_or_404(CommentStatus, slug=status_slug)
+        comment_status = get_object_or_404(Status, slug=status_slug)
         try:
-            like_dislike = LikeDislikeComment.objects.create(comment=comment, author=request.user.autho)
+            like_dislike = CommentStatus.objects.create(comment=comment, author=request.user.author, status=comment_status)
         except IntegrityError:
-            like_dislike = LikeDislikeComment.objects.get(comment=comment, author=request.user.autho)
+            like_dislike = CommentStatus.objects.get(comment=comment, author=request.user.autho)
             like_dislike.status = comment_status
             like_dislike.save()
             data = {"error": "You already added status"}
