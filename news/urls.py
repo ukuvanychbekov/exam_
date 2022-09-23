@@ -5,7 +5,7 @@ from . import views
 
 urlpatterns = [
     path('news/', views.NewsListCreateAPIview.as_view()),
-    path('news/<int:news_id>/', views.NewsRetrieveUpdateDestroyAPIView.as_view()),
+    path('news/<int:pk>/', views.NewsRetrieveUpdateDestroyAPIView.as_view()),
     path('news/<int:news_id>/comments/', views.CommentListCreateAPIView.as_view()),
     path('news/<int:news_id>/comments/<int:pk>/', views.CommentRetrieveUpdateDestroyAPIView.as_view()),
     path('news/<int:news_id>/<str:status_slug>/', views.PostNewsLike.as_view()),
